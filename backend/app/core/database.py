@@ -1,42 +1,32 @@
-from typing import AsyncGenerator
-from sqlmodel import SQLModel
-from sqlmodel.ext.asyncio.session import AsyncSession
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
-from sqlalchemy.orm import sessionmaker
+from typing import Generator
+from sqlmodel import SQLModel, create_engine, Session
 from app.core.config import settings
 
-# Create async engine
-async_engine: AsyncEngine = create_async_engine(
-    settings.DATABASE_URL,
+# Create sync engine for Vercel serverless
+engine = create_engine(
+    settings.DATABASE_URL.replace("postgresql+asyncpg://", "postgresql+psycopg2://"),
     echo=settings.ENVIRONMENT == "development",
-    future=True,
     pool_pre_ping=True,
-    pool_size=10,
-    max_overflow=20,
+    pool_size=5,
+    max_overflow=0,
 )
 
-# Session factory
-async_session_maker = sessionmaker(
-    async_engine, class_=AsyncSession, expire_on_commit=False
-)
+def get_engine():
+    """Get sync database engine"""
+    return engine
 
-def get_async_engine() -> AsyncEngine:
-    """Get async database engine"""
-    return async_engine
-
-async def get_session() -> AsyncGenerator[AsyncSession, None]:
-    """Dependency for getting async database session"""
-    async with async_session_maker() as session:
+def get_session() -> Generator[Session, None, None]:
+    """Dependency for getting database session"""
+    with Session(engine) as session:
         try:
             yield session
-            await session.commit()
+            session.commit()
         except Exception:
-            await session.rollback()
+            session.rollback()
             raise
         finally:
-            await session.close()
+            session.close()
 
-async def create_db_and_tables():
+def create_db_and_tables():
     """Create database tables (for testing/init)"""
-    async with async_engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
+    SQLModel.metadata.create_all(engine)

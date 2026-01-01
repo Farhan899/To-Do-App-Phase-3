@@ -1,12 +1,12 @@
 from typing import Annotated
 from fastapi import Depends, HTTPException, status, Header
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlmodel import Session
 from app.core.security import validate_session_token
 from app.core.database import get_session
 
-async def get_current_user(
+def get_current_user(
     authorization: Annotated[str | None, Header()] = None,
-    session: AsyncSession = Depends(get_session)
+    session: Session = Depends(get_session)
 ) -> str:
     """
     FastAPI dependency for extracting authenticated user ID from Better Auth session token.
@@ -38,6 +38,6 @@ async def get_current_user(
         )
 
     token = parts[1]
-    user_id = await validate_session_token(token, session)
+    user_id = validate_session_token(token, session)
 
     return user_id

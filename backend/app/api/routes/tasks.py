@@ -1,8 +1,7 @@
 from typing import List, Annotated
 from datetime import datetime
 from fastapi import APIRouter, Depends, Path, HTTPException, status
-from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlmodel import select, Session
 
 from app.models.task import Task
 from app.schemas.task import TaskCreate, TaskUpdate, TaskResponse
@@ -13,10 +12,10 @@ from app.core.security import verify_user_access
 router = APIRouter(prefix="/api/{user_id}", tags=["tasks"])
 
 @router.get("/tasks", response_model=List[TaskResponse])
-async def list_tasks(
+def list_tasks(
     user_id: Annotated[str, Path()],
     current_user: Annotated[str, Depends(get_current_user)],
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: Annotated[Session, Depends(get_session)],
 ) -> List[Task]:
     """
     List all tasks for the authenticated user.
@@ -32,17 +31,17 @@ async def list_tasks(
         .where(Task.user_id == user_id)
         .order_by(Task.created_at.desc())
     )
-    result = await session.execute(statement)
+    result = session.execute(statement)
     tasks = result.scalars().all()
 
     return list(tasks)
 
 @router.post("/tasks", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
-async def create_task(
+def create_task(
     user_id: Annotated[str, Path()],
     task_data: TaskCreate,
     current_user: Annotated[str, Depends(get_current_user)],
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: Annotated[Session, Depends(get_session)],
 ) -> Task:
     """
     Create a new task for the authenticated user.
@@ -58,17 +57,17 @@ async def create_task(
     )
 
     session.add(task)
-    await session.commit()
-    await session.refresh(task)
+    session.commit()
+    session.refresh(task)
 
     return task
 
 @router.get("/tasks/{task_id}", response_model=TaskResponse)
-async def get_task(
+def get_task(
     user_id: Annotated[str, Path()],
     task_id: Annotated[int, Path()],
     current_user: Annotated[str, Depends(get_current_user)],
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: Annotated[Session, Depends(get_session)],
 ) -> Task:
     """
     Get a specific task by ID. User must own the task.
@@ -78,7 +77,7 @@ async def get_task(
 
     # Fetch task
     statement = select(Task).where(Task.id == task_id, Task.user_id == user_id)
-    result = await session.execute(statement)
+    result = session.execute(statement)
     task = result.scalar_one_or_none()
 
     if not task:
@@ -87,12 +86,12 @@ async def get_task(
     return task
 
 @router.put("/tasks/{task_id}", response_model=TaskResponse)
-async def update_task(
+def update_task(
     user_id: Annotated[str, Path()],
     task_id: Annotated[int, Path()],
     task_data: TaskUpdate,
     current_user: Annotated[str, Depends(get_current_user)],
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: Annotated[Session, Depends(get_session)],
 ) -> Task:
     """
     Update an existing task.
@@ -101,7 +100,7 @@ async def update_task(
 
     # Fetch task
     statement = select(Task).where(Task.id == task_id, Task.user_id == user_id)
-    result = await session.execute(statement)
+    result = session.execute(statement)
     task = result.scalar_one_or_none()
 
     if not task:
@@ -116,17 +115,17 @@ async def update_task(
     task.updated_at = datetime.utcnow()
 
     session.add(task)
-    await session.commit()
-    await session.refresh(task)
+    session.commit()
+    session.refresh(task)
 
     return task
 
 @router.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_task(
+def delete_task(
     user_id: Annotated[str, Path()],
     task_id: Annotated[int, Path()],
     current_user: Annotated[str, Depends(get_current_user)],
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: Annotated[Session, Depends(get_session)],
 ) -> None:
     """
     Delete a task permanently.
@@ -135,21 +134,21 @@ async def delete_task(
 
     # Fetch task
     statement = select(Task).where(Task.id == task_id, Task.user_id == user_id)
-    result = await session.execute(statement)
+    result = session.execute(statement)
     task = result.scalar_one_or_none()
 
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
 
-    await session.delete(task)
-    await session.commit()
+    session.delete(task)
+    session.commit()
 
 @router.patch("/tasks/{task_id}/complete", response_model=TaskResponse)
-async def toggle_task_completion(
+def toggle_task_completion(
     user_id: Annotated[str, Path()],
     task_id: Annotated[int, Path()],
     current_user: Annotated[str, Depends(get_current_user)],
-    session: Annotated[AsyncSession, Depends(get_session)],
+    session: Annotated[Session, Depends(get_session)],
 ) -> Task:
     """
     Toggle task completion status (complete ↔ incomplete).
@@ -158,7 +157,7 @@ async def toggle_task_completion(
 
     # Fetch task
     statement = select(Task).where(Task.id == task_id, Task.user_id == user_id)
-    result = await session.execute(statement)
+    result = session.execute(statement)
     task = result.scalar_one_or_none()
 
     if not task:
@@ -169,7 +168,7 @@ async def toggle_task_completion(
     task.updated_at = datetime.utcnow()
 
     session.add(task)
-    await session.commit()
-    await session.refresh(task)
+    session.commit()
+    session.refresh(task)
 
     return task

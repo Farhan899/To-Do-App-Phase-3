@@ -3,7 +3,7 @@ from fastapi import HTTPException, status
 from typing import Dict, Any, Optional
 from datetime import datetime
 from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlmodel import Session
 from app.core.config import settings
 
 def decode_jwt(token: str, secret: str = settings.BETTER_AUTH_SECRET) -> Dict[str, Any]:
@@ -48,7 +48,7 @@ def decode_jwt(token: str, secret: str = settings.BETTER_AUTH_SECRET) -> Dict[st
             detail=f"Invalid authentication token: {str(e)}"
         )
 
-async def validate_session_token(token: str, session: AsyncSession) -> str:
+def validate_session_token(token: str, session: Session) -> str:
     """
     Validate Better Auth session token and return user ID.
 
@@ -72,7 +72,7 @@ async def validate_session_token(token: str, session: AsyncSession) -> str:
             WHERE token = :token
         """)
 
-        result = await session.execute(query, {"token": token})
+        result = session.execute(query, {"token": token})
         row = result.first()
 
         if not row:
