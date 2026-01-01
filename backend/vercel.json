@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "buildCommand": "pip install -r requirements.txt",
+  "devCommand": "uvicorn app.main:app --host 0.0.0.0 --port 3001",
+  "installCommand": "pip install -r requirements.txt",
+  "framework": null,
+  "outputDirectory": "."
+}
