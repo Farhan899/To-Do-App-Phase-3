@@ -1,18 +1,12 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "backend/**/*",
-      "use": "@vercel/python"
-    }
-  ],
+  "buildCommand": "cd backend && pip install -r requirements.txt",
+  "outputDirectory": "backend",
+  "framework": null,
   "routes": [
     {
       "src": "/(.*)",
       "dest": "backend/main.py"
     }
-  ],
-  "env": {
-    "PYTHONPATH": "backend"
-  }
+  ]
 }
