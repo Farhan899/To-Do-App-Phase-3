@@ -1,8 +1,11 @@
 import { betterAuth } from "better-auth";
 import { Pool } from "pg";
 
+// Remove sslmode from connection string and use Pool's SSL option instead
+const dbUrl = process.env.DATABASE_URL?.replace('?sslmode=require', '')?.replace('?sslmode=require', '');
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: dbUrl,
   ssl: process.env.DATABASE_URL?.includes('neon.tech') ? { rejectUnauthorized: false } : false,
 });
 
