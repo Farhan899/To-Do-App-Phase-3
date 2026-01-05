@@ -8,6 +8,7 @@ const pool = new Pool({
 export default betterAuth({
   database: pool,
   secret: process.env.BETTER_AUTH_SECRET!,
+  baseURL: process.env.NEXT_PUBLIC_APP_URL as string || "http://localhost:3000",
   emailAndPassword: {
     enabled: true,
   },
