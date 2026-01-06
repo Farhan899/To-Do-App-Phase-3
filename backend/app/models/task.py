@@ -1,6 +1,12 @@
 from sqlmodel import Field, SQLModel
 from datetime import datetime
 from typing import Optional
+from enum import Enum
+
+class Priority(str, Enum):
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
 
 class Task(SQLModel, table=True):
     """Task entity representing a todo item"""
@@ -11,5 +17,7 @@ class Task(SQLModel, table=True):
     title: str = Field(min_length=1, max_length=200)
     description: Optional[str] = Field(default=None, max_length=2000)
     is_completed: bool = Field(default=False)
+    priority: Optional[Priority] = Field(default=None)
+    due_date: Optional[datetime] = Field(default=None)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)

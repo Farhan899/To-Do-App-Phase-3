@@ -1,11 +1,13 @@
 from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Literal
 
 class TaskCreate(BaseModel):
     """Schema for creating a new task"""
     title: str = Field(..., min_length=1, max_length=200)
     description: Optional[str] = Field(None, max_length=2000)
+    priority: Optional[Literal["high", "medium", "low"]] = None
+    due_date: Optional[str] = None
 
     @field_validator('title')
     @classmethod
@@ -21,10 +23,22 @@ class TaskCreate(BaseModel):
             return None
         return v
 
+    @field_validator('due_date')
+    @classmethod
+    def parse_due_date(cls, v: Optional[str]) -> Optional[datetime]:
+        if v is None:
+            return None
+        try:
+            return datetime.fromisoformat(v)
+        except ValueError:
+            raise ValueError('Invalid date format. Use ISO format (YYYY-MM-DD)')
+
 class TaskUpdate(BaseModel):
     """Schema for updating an existing task"""
     title: Optional[str] = Field(None, min_length=1, max_length=200)
     description: Optional[str] = Field(None, max_length=2000)
+    priority: Optional[Literal["high", "medium", "low", None]] = None
+    due_date: Optional[str] = None
 
     @field_validator('title')
     @classmethod
@@ -40,6 +54,16 @@ class TaskUpdate(BaseModel):
             return None
         return v
 
+    @field_validator('due_date')
+    @classmethod
+    def parse_due_date(cls, v: Optional[str]) -> Optional[Optional[datetime]]:
+        if v is None:
+            return None
+        try:
+            return datetime.fromisoformat(v)
+        except ValueError:
+            raise ValueError('Invalid date format. Use ISO format (YYYY-MM-DD)')
+
 class TaskResponse(BaseModel):
     """Schema for task API responses"""
     id: int
@@ -47,6 +71,8 @@ class TaskResponse(BaseModel):
     title: str
     description: Optional[str]
     is_completed: bool
+    priority: Optional[str] = None
+    due_date: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
 
