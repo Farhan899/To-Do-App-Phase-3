@@ -227,7 +227,7 @@ export default function TaskList({
 
                   {/* Created Date */}
                   <span className="text-xs text-gray-400">
-                    Created {new Date(task.created_at).toLocaleDateString()}
+                    Created {new Date(task.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                   </span>
                 </div>
               </div>
